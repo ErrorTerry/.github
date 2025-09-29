@@ -1,0 +1,23 @@
+name: Auto Add to Central Project
+
+on:
+  issues:
+    types: [opened, reopened, edited, transferred]
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, edited]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  projects: write
+
+jobs:
+  add-to-central:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add to central project
+        uses: actions/add-to-project@v1
+        with:
+          project-url: https://github.com/orgs/ErrorTerry/projects/3   # 중앙 프로젝트 URL로 교체
+          github-token: ${{ secrets.GITHUB_TOKEN }}
