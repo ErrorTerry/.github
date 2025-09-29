@@ -1,0 +1,16 @@
+name: ✅ Task
+description: 일반 작업/리팩터링/문서
+labels: ["task"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 목적
+      placeholder: 작업의 목적/완료 조건
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 영역
+      options: [AlgoTrack-backend-spring, AlgoTrack-chrome-extension, AlgoTrack-infra]
