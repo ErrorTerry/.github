@@ -1,0 +1,58 @@
+name: Auto reviewer by assignee (2-person team)
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened, edited, synchronize, assigned]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  USER_A: @SHU-sy
+  USER_B: @SnowCloudWay
+
+jobs:
+  set-reviewer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pick reviewer based on PR assignee
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const A = process.env.USER_A;
+            const B = process.env.USER_B;
+
+            const pr = context.payload.pull_request;
+
+            // assignees 배열에서 첫 번째를 기준으로 판단 (2인 팀 가정)
+            const assignees = pr.assignees?.map(a => a.login) || [];
+            if (assignees.length === 0) {
+              core.info('No assignee -> skip requesting reviewer.');
+              return;
+            }
+            const assignee = assignees[0];
+            const reviewer = (assignee === A) ? B : A;
+
+            // 이미 같은 리뷰어가 걸려있으면 스킵
+            const currentReviewers = await github.paginate(github.pulls.listRequestedReviewers, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+            });
+            const already = currentReviewers
+              .flatMap(r => [...(r.users || [])].map(u => u.login))
+              .includes(reviewer);
+            if (already) {
+              core.info(`Reviewer ${reviewer} already requested. Skip.`);
+              return;
+            }
+
+            await github.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              reviewers: [reviewer],
+            });
+            core.info(`Requested review from ${reviewer} (assignee: ${assignee}).`);
